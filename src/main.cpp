@@ -4,16 +4,21 @@
 #include <GyverBME280.h>
 #include <mString.h>
 
+// порт mqtt про умолчанию
 const int mqttPort = 1883;
+// сон после отправки сообщения на mqtt
 const int timeout = 60 * 1000;
+// пин светодиода
 const int pin=2;
 
+// структура с параметрами от датчика BME280
 typedef struct {
   double temperature;
   double humidity;
   int pressure;
 } BME280Data;
 
+// функция чтения данных с датчика BME280
 BME280Data ReadBMEData(){
   static GyverBME280 bme;
   BME280Data Result;
@@ -25,18 +30,21 @@ BME280Data ReadBMEData(){
   return Result;
 }
 
+// генерация имени устройства на основе mac WIFI адаптера
 char* GetDeviceName(){
   static char DeviceName[20];
   if(strlen(DeviceName) == 0){
     String mac = WiFi.macAddress();
     mac.replace(':', '_');
     mac.toCharArray(DeviceName, sizeof(DeviceName));
-    Serial.print("set DeviceName: "); 
+    Serial.print("DeviceName: "); 
     Serial.println(DeviceName);
   }
   return DeviceName;
 }
 
+// инициализация WIFI адаптера.
+// пробует подключиться к заданной WIFI сети, если не получается инициализирует сервер.
 void InitWifi(){
   WiFi.mode(WIFI_STA);
   std::vector<const char *> menu = {"wifi", "info"};
@@ -49,6 +57,8 @@ void InitWifi(){
   wm.setHostname(GetDeviceName());
 }
 
+// поиск mqtt сервера в сети
+// возвращает IP адрес
 IPAddress MqttServerIp() {
   static IPAddress mqttIp;
   WiFiClient wifiClient;
@@ -76,6 +86,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Message received: " + String(topic));
 }
 
+// отправка данных с датчика на mqtt сервер
 void SendReport(BME280Data d){
   IPAddress mqttIP = MqttServerIp();
   if(!mqttIP)
@@ -101,6 +112,7 @@ void SendReport(BME280Data d){
   }
 }
 
+// инициализация устройства
 void setup() {
   pinMode(pin, OUTPUT);
   Serial.begin(9600);
@@ -115,10 +127,10 @@ void loop() {
   BME280Data data = ReadBMEData();
   SendReport(data);
   //WiFi.setSleep(true);
-  Serial.print("time: ");
+  Serial.print("time read and send data: ");
   Serial.println((millis()-timer_start) / 1000.0, 3);
   digitalWrite(pin, true);
-  //delay(timeout);
+  delay(timeout);
   //ESP.deepSleep(timeout, WAKE_RF_DISABLED);
-  ESP.deepSleep(timeout * 1000, RF_DEFAULT);
+  //ESP.deepSleep(timeout * 1000, RF_DEFAULT);
 }
