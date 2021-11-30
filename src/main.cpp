@@ -1,8 +1,8 @@
 #include <WiFiManager.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <GyverBME280.h>
 #include <mString.h>
+#include <BMEReader.h>
 
 // порт mqtt про умолчанию
 const int mqttPort = 1883;
@@ -10,25 +10,6 @@ const int mqttPort = 1883;
 const int timeout = 60 * 1000;
 // пин светодиода
 const int pin=2;
-
-// структура с параметрами от датчика BME280
-typedef struct {
-  double temperature;
-  double humidity;
-  int pressure;
-} BME280Data;
-
-// функция чтения данных с датчика BME280
-BME280Data ReadBMEData(){
-  static GyverBME280 bme;
-  BME280Data Result;
-  if (bme.begin()) {
-    Result.temperature = bme.readTemperature();
-    Result.humidity = bme.readHumidity();
-    Result.pressure = pressureToMmHg(bme.readPressure());
-  }
-  return Result;
-}
 
 // генерация имени устройства на основе mac WIFI адаптера
 char* GetDeviceName(){
