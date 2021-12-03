@@ -1,4 +1,6 @@
 #ifndef WifiAutoConnector_h
+#define WifiAutoConnector_h
+
 #include <WiFiManager.h>
 #include <ESP8266WiFi.h>
 

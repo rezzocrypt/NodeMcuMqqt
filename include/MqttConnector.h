@@ -1,4 +1,6 @@
 #ifndef MqttConnector_h
+#define MqttConnector_h
+
 #include <PubSubClient.h>
 #include <WifiAutoConnector.h>
 #include <mString.h>
