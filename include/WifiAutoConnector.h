@@ -14,7 +14,8 @@ class WifiAutoConnector {
             static char DeviceName[20];
             if(strlen(DeviceName) == 0){
                 String mac = WiFi.macAddress();
-                mac.replace(':', '_');
+                //приводим к буквоциферному варианту
+                mac.remove(':');
                 mac.toCharArray(DeviceName, sizeof(DeviceName));
                 Serial.print("DeviceName: "); 
                 Serial.println(DeviceName);

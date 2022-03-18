@@ -41,7 +41,7 @@ class MqttConnector {
         }
 
         // отправка данных с датчика на mqtt сервер
-        void SendReport(char* json){
+        void SendReport(const char* sensorName, char* json){
             IPAddress mqttIP = MqttServerIp();
             if(!mqttIP)
                 return;
@@ -49,8 +49,9 @@ class MqttConnector {
             char* DeviceName = wifiConnector.GetDeviceName();
             if (MqttClient.connect(DeviceName)){
                 mString<65> topic;
-                topic += "BME280/";
                 topic += DeviceName;
+                topic +="/";
+                topic += sensorName;
                 MqttClient.publish(topic.buf, json);
                 MqttClient.disconnect();
                 Serial.println("Send complete");

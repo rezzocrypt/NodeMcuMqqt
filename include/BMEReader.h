@@ -13,12 +13,12 @@ typedef struct {
 // функция чтения данных с датчика BME280
 BME280Data ReadBMEData(){
   static GyverBME280 bme;
-  BME280Data Result;
+  BME280Data scanResult;
   if (bme.begin()) {
-    Result.temperature = bme.readTemperature();
-    Result.humidity = bme.readHumidity();
-    Result.pressure = pressureToMmHg(bme.readPressure());
+    scanResult.temperature = bme.readTemperature();
+    scanResult.humidity = bme.readHumidity();
+    scanResult.pressure = pressureToMmHg(bme.readPressure());
   }
-  return Result;
+  return scanResult;
 }
 #endif

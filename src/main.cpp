@@ -18,20 +18,24 @@ void setup() {
   MqqtConnector.wifiConnector.InitWifi();
 }
 
+void BMEReport(){
+  BME280Data data = ReadBMEData();
+  // собираем json данные для mqqt
+    mString<65> json;
+    json += "{\"tempC\":";
+    json += data.temperature;
+    json += ",\"humidity\":";
+    json += data.humidity;
+    json += ",\"pressure\":";
+    json += data.pressure;
+    json += "}";
+  MqqtConnector.SendReport("BME280", json.buf);
+}
+
 void loop() {
   digitalWrite(pin, false);
 
-    BME280Data data = ReadBMEData();
-    // собираем json данные для mqqt
-          mString<65> json;
-          json += "{\"tempC\":";
-          json += data.temperature;
-          json += ",\"humidity\":";
-          json += data.humidity;
-          json += ",\"pressure\":";
-          json += data.pressure;
-          json += "}";
-    MqqtConnector.SendReport(json.buf);
+  BMEReport();
 
   digitalWrite(pin, true);
   delay(timeout);
