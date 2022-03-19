@@ -1,8 +1,6 @@
 #include <BMEReader.h>
 #include <MqttConnector.h>
-
-// сон после отправки сообщения на mqtt
-const int timeout = 120e6;
+#include <TaskRunner.h>
 
 // пин светодиода
 const int ledPin=2;
@@ -10,26 +8,15 @@ const int ledPin=2;
 // работа с mqqt
 MqttConnector MqqtConnector;
 
-// инициализация устройства
-void setup() {
-  pinMode(ledPin, OUTPUT);
-  Serial.begin(9600);
-  Serial.println("NodeMCU v3");
-  MqqtConnector.wifiConnector.InitWifi();
-}
+// запускалка заданий на обработку
+TaskRunner Runner;
 
-//Запуск фунций репортов с перехватом ошибок
-void InvokeAction(void (*ptrF)(void)){
-  try{ ptrF(); }
-  catch(...) { }
-}
-
-//отправка данных с датчика BME280
-void BMEReport(){
+// отправка данных с датчика BME280
+bool BMEReport(){
   BME280Data data = ReadBMEData();
   //не получены данные со счетчика
-  if(data.pressure == 0 || data.temperature == 0 || data.humidity ==0)
-    return;
+  if(data.pressure == 0 || data.temperature == 0 || data.humidity == 0)
+    return false;
   // собираем json данные для mqqt
     mString<65> json;
     json += "{\"tempC\":";
@@ -40,13 +27,23 @@ void BMEReport(){
     json += data.pressure;
     json += "}";
   MqqtConnector.SendReport("BME280", json.buf);
+  return true;
 }
 
+// инициализация устройства
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("NodeMCU v3");
+  MqqtConnector.wifiConnector.InitWifi();
+
+  Runner.AddTask("BMEReport", BMEReport, 120e6);
+}
+
+// цикл с засыпанием
 void loop() {
   digitalWrite(ledPin, true);
-  
-  InvokeAction(BMEReport);
-
+  Runner.Invoke();
   digitalWrite(ledPin, false);
-  ESP.deepSleep(timeout, RF_DEFAULT);
+  ESP.deepSleep(Runner.Interval, RF_DEFAULT);
 }
