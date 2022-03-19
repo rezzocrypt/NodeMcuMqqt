@@ -3,6 +3,7 @@
 
 #include <PubSubClient.h>
 #include <WifiAutoConnector.h>
+#include <EEPROM.h>
 #include <mString.h>
 
 // Читаем MQTT сообщения
@@ -11,32 +12,47 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 }
 
 class MqttConnector {
+    private:
+        WiFiClient wClient = wifiConnector.wifiClient;
+        bool checkMqttIp(IPAddress ip){
+            return wClient.connect(ip, mqttPort);
+        }
+
     public:
+        WifiAutoConnector wifiConnector;
+
+        //Хранение настроек IP адреса в EEPROM
+        int MQTT_CONFIG_ADDRESS = 100;
         // порт mqtt про умолчанию
         int mqttPort = 1883;
-        WifiAutoConnector wifiConnector;
+        // адрес mqtt сервера
+        IPAddress mqttIp;
+
+        MqttConnector(){
+            EEPROM.get(MQTT_CONFIG_ADDRESS, mqttIp);
+        }
 
         // поиск mqtt сервера в сети
         // возвращает IP адрес
         IPAddress MqttServerIp() {
-            static IPAddress mqttIp;
-            WiFiClient wClient = wifiConnector.wifiClient;
             unsigned currentTimeout = wClient.getTimeout();
             wClient.setTimeout(80);
-            bool needFind = !mqttIp || !wClient.connect(mqttIp, mqttPort);
+            bool needFind = !mqttIp || !checkMqttIp(mqttIp);
             if(needFind){
                 Serial.println("Find Mqtt");
                 IPAddress currentIP = WiFi.localIP();
                 for (int i = 1; i <= 255; i++) {
                     currentIP[3] = i;
-                    if (wClient.connect(currentIP, mqttPort)) {
+                    Serial.print("chech Ip: ");Serial.println(currentIP);
+                    if (checkMqttIp(currentIP)) {
                         mqttIp = currentIP;
-                        Serial.println("MQTT Ip: " + mqttIp.toString());
+                        EEPROM.put(MQTT_CONFIG_ADDRESS, currentIP);
                         break;
                     }
                 }
             }
             wClient.setTimeout(currentTimeout);
+            Serial.println("MQTT Ip: " + mqttIp.toString());
             return mqttIp;
         }
 
@@ -57,6 +73,5 @@ class MqttConnector {
                 Serial.println("Send complete");
             }
         }
-    private:
 };
 #endif

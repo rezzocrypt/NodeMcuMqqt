@@ -14,7 +14,16 @@ class TaskRunner {
   private:
 
     //наибольший общий делитель
-    long int nod (int x, int y) { return ( x ? nod(y % x, x) : y); }
+    long int nod (int a, int b) { 
+      while (a != b) {
+        if (a > b) {
+          a = a - b;
+        } else {
+          b = b - a;
+        }
+      }
+      return a;
+     }
 
     // кючи
     std::vector<String> _keys;
@@ -23,11 +32,14 @@ class TaskRunner {
 
   public:
     // необходимый интервал выполнения заданий
-    unsigned Interval = INT_MAX;
+    unsigned Interval;
 
     // добавить задание в очередь
     void AddTask(String Key, bool (*taskPrt)(void), unsigned _interval){
-      
+
+      if(_keys.size() == 0)
+        Interval = _interval;
+
       for(unsigned i=0; i < _keys.size(); i++){
         // элемент уже в массиве, пропускаем добавление
         if(_keys[i] == Key)
@@ -40,8 +52,7 @@ class TaskRunner {
 
       _keys.push_back(Key);
       _values.push_back(t);
-
-      Interval = nod(min(Interval, _interval),max(Interval, _interval));
+      Interval = nod(Interval, _interval);
     }
 
     // выполнить задания ожидающие выполнения
@@ -51,9 +62,7 @@ class TaskRunner {
         currentElement.lastInvoke += Interval;
         if(currentElement.lastInvoke >= currentElement.Interval){
           try{
-            bool result = currentElement.TaskPrt();
-            //если успешно, выставляем что выполнено
-            if(result)
+            if(currentElement.TaskPrt())
               currentElement.lastInvoke = 0;
           }
           catch(...) { }
