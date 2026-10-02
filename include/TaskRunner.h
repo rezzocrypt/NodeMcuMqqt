@@ -1,7 +1,8 @@
 #ifndef TaskRunner_h
 #define TaskRunner_h
 
-#include <vector> 
+#include <Arduino.h>
+#include <vector>
 
 // структура с параметрами от выполяющихся заданий
 typedef struct {
@@ -13,14 +14,12 @@ typedef struct {
 class TaskRunner {
   private:
 
-    //наибольший общий делитель
-    long int nod (int a, int b) { 
-      while (a != b) {
-        if (a > b) {
-          a = a - b;
-        } else {
-          b = b - a;
-        }
+    //наибольший общий делитель через остаток от деления
+    unsigned nod (unsigned a, unsigned b) {
+      while (b != 0) {
+        unsigned tmp = b;
+        b = a % b;
+        a = tmp;
       }
       return a;
      }
@@ -32,7 +31,7 @@ class TaskRunner {
 
   public:
     // необходимый интервал выполнения заданий
-    unsigned Interval;
+    unsigned Interval = 0;
 
     // добавить задание в очередь
     void AddTask(String Key, bool (*taskPrt)(void), unsigned _interval){
@@ -58,12 +57,11 @@ class TaskRunner {
     // выполнить задания ожидающие выполнения
     void Invoke(){
       for(unsigned i=0; i <_values.size(); i++){
-        Task currentElement = _values[i];
-        currentElement.lastInvoke += Interval;
-        if(currentElement.lastInvoke >= currentElement.Interval){
+        _values[i].lastInvoke += Interval;
+        if(_values[i].lastInvoke >= _values[i].Interval){
           try{
-            if(currentElement.TaskPrt())
-              currentElement.lastInvoke = 0;
+            if(_values[i].TaskPrt())
+              _values[i].lastInvoke -= _values[i].Interval;
           }
           catch(...) { }
         }
